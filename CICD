@@ -1,0 +1,28 @@
+node{
+    stage('git checkout'){
+         git 'https://github.com/nitishsagar998/Jenkins-Docker-Project.git'
+    }
+    
+    stage('Docker buid image'){
+        sh 'docker image build -t $JOB_NAME:v1.$BUILD_ID .'
+        sh 'docker image tag $JOB_NAME:v1.$BUILD_ID nitishsagar998/$JOB_NAME:v1.$BUILD_ID'
+        sh 'docker image tag $JOB_NAME:v1.$BUILD_ID nitishsagar998/$JOB_NAME:latest'
+    } 
+    stage('Push to Docker Hub'){
+         sh 'docker login -u "nitishsagar998" -p "sagar2715@" docker.io'
+         sh 'docker image push nitishsagar998/$JOB_NAME:v1.$BUILD_ID'
+         sh 'docker image push nitishsagar998/$JOB_NAME:latest'
+
+         sh 'docker image rm $JOB_NAME:v1.$BUILD_ID nitishsagar998/$JOB_NAME:v1.$BUILD_ID nitishsagar998/$JOB_NAME:latest '
+     
+    }
+        stage('Docker Container Deployment'){
+            def docker_run = 'docker run -itd --name scriptedcontainer -p 9000:80 nitishsagar998/dokcer_project1'
+	        sshagent(['webapps_server']) {
+             sh "ssh -tt -o StrictHostKeyChecking=no ec2-user@172.31.45.181 ${docker_run}"
+           }
+   
+       }
+       
+    
+}
